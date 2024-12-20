@@ -1,2 +1,2 @@
-# torch_HF
+# HF_torch
 Hartree-Fock computations in pytorch
