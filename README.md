@@ -1,2 +1,2 @@
-# HF_torch
-Hartree-Fock computations in pytorch
+# torchSCF
+Electronic structure methods implemented in pytorch
