@@ -24,7 +24,7 @@ def compute_integrals(mol: molecule.Molecule):
 
 def run_scf(
     mol: molecule.Molecule,
-    basis_set: str,
+    basis_set_params: dict,
     maxiter: int = 100,
     etol: float = 1e-6,
     ptol: float = 1e-6,
@@ -35,14 +35,14 @@ def run_scf(
 
     Args:
         mol: molecule object
-        basis_set: name of the basis set
+        basis_set_params: parameters for basis set
         maxiter: maximum number of SCF iterations
         etol: tolerance for energy convergence (in Hartree)
         ptol: tolerance for density matrix convergence
 
     """
     # (1) Set up basis set
-    mol.get_basis_set(basis_set)
+    mol.get_basis_set(basis_set_params)
 
     # (2) compute molecular integrals
     S = integrals.compute_overlap_matrix(mol.basis_set)

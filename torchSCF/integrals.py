@@ -5,6 +5,7 @@ import numpy as np
 from typing import List, Union
 
 from orbitals import PrimitiveGaussian, ContractedGaussian
+import chemical 
 
 import pdb
 
@@ -28,8 +29,9 @@ def primitive_gaussian_overlap(
     p = alpha + beta
     mu = alpha * beta / p
 
-    Ra = pg1.center
-    Rb = pg2.center
+    # convert from Angstroms to Bohr here...
+    Ra = pg1.center * chemical.angstrom2bohr
+    Rb = pg2.center * chemical.angstrom2bohr
 
     squared_distance = torch.sum((Ra - Rb) ** 2)
 
@@ -44,11 +46,11 @@ def primitive_gaussian_overlap(
 
 
 def contracted_gaussian_overlap(cg1, cg2):
-    """Compute single overlap S12 between two contracted gaussians."""
+    """Compute single overlap s between two contracted gaussians."""
     assert len(cg1) == len(
         cg2
     ), "Contracted gaussians must have the same number of primitives"
-    S12 = 0
+    s = 0
 
     NG = len(cg1)
     d1 = cg1.coefficients
@@ -59,9 +61,9 @@ def contracted_gaussian_overlap(cg1, cg2):
             prim_1 = cg1.primitives[i]
             prim_2 = cg2.primitives[j]
 
-            S12 += d1[i] * d2[j] * primitive_gaussian_overlap(prim_1, prim_2) 
+            s += d1[i] * d2[j] * primitive_gaussian_overlap(prim_1, prim_2) 
 
-    return S12
+    return s
 
 
 def contracted_gaussian_overlap_matrix(

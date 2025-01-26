@@ -16,8 +16,14 @@ class Molecule:
     def __init__(
         self, xyz: List[tuple], elements: List[str], n_electrons: Optional[int] = None
     ):
-        """Create a Molecule object"""
-        self.xyz = xyz
+        """Create a Molecule object
+        
+        Args:
+            xyz: list of atomic coordinates (in Angstroms!!!)
+            elements: list of atomic symbols
+            n_electrons: number of electrons in the molecule
+        """
+        self.xyz = xyz 
         self.elements = elements
 
         if n_electrons is None:
@@ -27,17 +33,23 @@ class Molecule:
         """Count the number of electrons which would make the molecule neutral"""
         return sum([chemical.get_atomic_number(e) for e in self.elements])
 
-    def get_basis_set(self, basis_set: str):
+    def get_basis_set(self, basis_set_kwargs: dict):
         """Get the basis set for the molecule
 
         Args:
-            basis_set: name of the basis set
+            basis_set_kwargs: parameters for setting up basis set 
         """
+        basis_set = basis_set_kwargs["basis_set"]
         self.basis_set_params = chemical.basis_sets[basis_set.lower()]
 
         o = []
-        if re.search(r"sto-.g", basis_set): # STO-NG basis set
+        if re.search(r"sto-.g", basis_set): 
+            # STO-NG basis set
             CG = orbitals.ContractedGaussian
+
+            # get the Slater type orbital zeta, scale alphas accordingly 
+            zeta = basis_set_kwargs["sto_zeta"] 
+            self.basis_set_params = chemical.transform_sto_ng_zeta(zeta, self.basis_set_params)
 
             alphas = self.basis_set_params["alphas"]
             weights = self.basis_set_params["weights"]

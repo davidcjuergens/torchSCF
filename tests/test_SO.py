@@ -2,8 +2,9 @@
 
 import os
 import unittest
+import torch 
 
-from torchSCF import scf, parsers, molecule
+from torchSCF import scf, parsers, molecule, integrals
 
 import pdb
 
@@ -24,12 +25,29 @@ class Test_STO_3G_H2(unittest.TestCase):
         Tests the SCF procedure for H2.
         """
         h2_data = parsers.parse_xyz(self.h2_path, xyz_th=True)
-        h2 = molecule.Molecule(h2_data["xyz"], h2_data["elements"])
+        mol = molecule.Molecule(h2_data["xyz"], h2_data["elements"])
 
         maxiters = 100
         ptol = 1e-6
         basis_set = "sto-3g"
+        sto_zeta = 1.24
+        basis_set_kwargs = {"basis_set": basis_set, "sto_zeta": sto_zeta}
 
-        inputs = {"mol": h2, "basis_set": basis_set, "maxiter": maxiters, "ptol": ptol}
+        # get basis set 
+        mol.get_basis_set(basis_set_kwargs)
 
-        out = scf.run_scf(**inputs)
+        alphas_golden = [0.168856, 0.623913, 3.42525]
+        weights_golden = [0.444635, 0.535328, 0.154329]
+        for i in range(3):
+            self.assertAlmostEqual(mol.basis_set_params["alphas"][i], alphas_golden[i], places=6)
+            self.assertAlmostEqual(mol.basis_set_params["weights"][i], weights_golden[i], places=6)
+        
+
+        # overlap matrix 
+        S = integrals.compute_overlap_matrix(mol.basis_set)
+        
+        # from SO eq. 3.229
+        S_golden = torch.tensor([[1.0, 0.6593], 
+                                 [0.6593, 1.0]])
+
+        torch.testing.assert_close(S, S_golden, rtol=1e-4, atol=1e-4)
