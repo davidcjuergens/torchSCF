@@ -1,7 +1,10 @@
 """File parsing"""
 
+import numpy as np
+import torch
 
-def parse_xyz(filename: str):
+
+def parse_xyz(filename: str, xyz_th: bool = False):
     """Parse an xyz file
 
     XYZ file format:
@@ -16,10 +19,11 @@ def parse_xyz(filename: str):
 
     Args:
         filename (str): The name of the file to parse
-
+        xyz_th (bool): Return xyz coordinates as a torch tensor (else, numpy array)
     Returns:
         dict: Dictionary containing
     """
+
     elements, xyz = [], []
 
     with open(filename, "r") as f:
@@ -38,5 +42,7 @@ def parse_xyz(filename: str):
     assert (
         len(elements) == natoms
     ), f".xyz file says {natoms} atoms, but found {len(elements)} atoms"
+
+    xyz = np.array(xyz) if not xyz_th else torch.tensor(xyz)
 
     return {"natoms": natoms, "comment": comment, "elements": elements, "xyz": xyz}

@@ -1,94 +1,87 @@
-# Classes for creating/manipulating orbital functions 
+# Classes for creating/manipulating orbital functions
 import torch
-import torch.nn as nn 
-import math 
-from typing import Union
-from tqdm import tqdm
-import pdb 
-import time 
+import torch.nn as nn
+import math
+from typing import Union, List
+import pdb
+import time
 
 ORIGIN = torch.tensor(0.0)
 
-class Orbital(torch.nn.Module):
+
+class Orbital:
     # Base class for all orbitals
-    def __init__(self): 
-        super(Orbital, self).__init__()
-    
+    def __init__(self):
+        pass
+
     def evaluate_density(self, r):
-        """
-        Returns the probability density at r. 
-        """
-        return torch.tensor(float('nan')) # should be implemented by subclasses
-    
-    def forward(self, r:torch.tensor): 
-        return self.evaluate_density(r)
+        raise NotImplementedError
+
+    def torchify(self):
+        pass
 
 
-
-class PrimitiveGaussian(Orbital): 
+class PrimitiveGaussian(Orbital):
     """
     Gaussian Type orbital - SO eq. 3.203
     """
 
-    def __init__(self,  alpha:  torch.tensor = torch.tensor(1.0), 
-                        center: torch.tensor = ORIGIN.clone()):
-        super().__init__()
-        assert len(alpha.shape) in (0,1), f"Alpha must be a scalar: {alpha.shape=}" 
-        assert len(center.shape) in (0,1), f"Center must be a scalar: {center.shape=}"
-        
-        self.alpha = nn.Parameter(alpha) 
-        self.center = center
+    def __init__(
+        self,
+        alpha: float,
+        center: tuple,
+    ):
+        """Basic container for primitive gaussian type orbital.
 
-    def evaluate_density(self, r:torch.tensor): 
+        Args:
+            alpha: exponential factor
+            center: center of the gaussian
         """
-        Returns probability density at r. 
+
+        self.alpha = alpha
+        self.center = torch.tensor(center)
+
+    def evaluate_density(self, r: torch.tensor):
         """
-        prefactor = (2*self.alpha/math.pi)**(3/4)
-        return prefactor * torch.exp(-self.alpha * (torch.abs(r-self.center)**2))
+        Returns probability density at r.
+        """
+        prefactor = (2 * self.alpha / math.pi) ** (3 / 4)
+        return prefactor * torch.exp(-self.alpha * (torch.abs(r - self.center) ** 2))
     
+    @ property 
+    def prefactor(self):
+        return (2 * self.alpha / math.pi) ** (3 / 4)
+
+    def __len__(self):
+        return 1
+
 
 class ContractedGaussian(Orbital):
-    """
-    A Contracted Gaussian Function (i.e., linear combination of primitive gaussians)
-    """
+    """A linear combination of primitive gaussians"""
 
-    def __init__(self, L, alphas:torch.tensor, ds:torch.tensor):
+    def __init__(
+        self,
+        alphas: List[float],
+        coefficients: List[float],
+        centers: List[Union[tuple, torch.tensor]],
+    ):
+        """Create a contracted gaussian.
+
+        Args:
+            alphas: list of exponents
+            centers: list of centers
+            coefficients: list of mixture coefficients
         """
-        Parameters: 
-            L: number of primitive gaussians
-            alphas: list of alphas for each primitive gaussian
-        """
-        super().__init__()
-        self.L = L
-        self.ds = nn.Parameter(ds)
 
-        self.primitive_gaussians = nn.ModuleList( [PrimitiveGaussian(alpha) for alpha in alphas] )
+        self.primitives = [
+            PrimitiveGaussian(alpha, center) for alpha, center in zip(alphas, centers)
+        ]
 
-        # check if params are leaf nodes 
-        assert all( [alpha.is_leaf for alpha in alphas] ), "Alphas must be leaf nodes"
-        assert ds.is_leaf, "ds must be a leaf node"
-        
+        self.coefficients = torch.tensor(coefficients)
+        self.alphas = torch.tensor(alphas)
 
-    def evaluate_density(self, r:torch.tensor):
-        """
-        Returns the probability density at r, which is the sum of the primitive gaussians 
-        evaluated at r. 
-        """
-        assert len(r.shape) >= 1, f"r must be a tensor: {r.shape=}"
+        if (not torch.is_tensor(centers)) and (torch.is_tensor(centers[0])):
+            self.centers = torch.stack(centers)
 
-        # should vectorize this...
-        densities = torch.stack( [PG.evaluate_density(r) for PG in self.primitive_gaussians] )
-
-        densities = densities * self.ds[:,None]
-
-        return torch.sum(densities, axis=0)
-        
-
-
-            
-
-
-
-        
-
-
+    def __len__(self):
+        return len(self.primitives)
