@@ -51,3 +51,32 @@ class Test_STO_3G_H2(unittest.TestCase):
                                  [0.6593, 1.0]])
 
         torch.testing.assert_close(S, S_golden, rtol=1e-4, atol=1e-4)
+
+
+        # Kinetic energy matrix
+        T = integrals.contracted_gaussian_T_matrix(mol.basis_set)
+
+        T_golden = torch.tensor([[0.7600, 0.2365],
+                                 [0.2365, 0.7600]])
+        
+        torch.testing.assert_close(T, T_golden, rtol=1e-4, atol=1e-4)
+
+        # nuclear attraction matrix -- first nucleus
+        V1 = integrals.contracted_gaussian_V_matrix(mol.basis_set, mol.xyz[0])
+        V1_golden = torch.tensor([[-1.2266, -0.5974],
+                                  [-0.5974, -0.6538]])
+        print(V1)
+        torch.testing.assert_close(V1, V1_golden, rtol=1e-4, atol=1e-4)
+
+        # nuclear attraction matrix -- second nucleus
+        V2 = integrals.contracted_gaussian_V_matrix(mol.basis_set, mol.xyz[1])
+        V2_golden = torch.tensor([[-0.6538, -0.5974],
+                                  [-0.5974, -1.2266]])
+        torch.testing.assert_close(V2, V2_golden, rtol=1e-4, atol=1e-4)
+
+        # core Hamiltonian matrix
+        Hcore = T + V1 + V2
+        Hcore_golden = torch.tensor([[-1.1204, -0.9584],
+                                     [-0.9584, -1.1204]])
+        torch.testing.assert_close(Hcore, Hcore_golden, rtol=1e-4, atol=1e-4)
+        
