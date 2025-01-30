@@ -147,7 +147,7 @@ class Test_STO_3G_H2(unittest.TestCase):
         # Get E total with nuclear repulsion
         E_total = E0 + mol.nuclear_repulsion
         E_total_golden = -1.1167
-        # self.assertAlmostEqual(E_total.item(), E_total_golden, places=4)
+        self.assertAlmostEqual(E_total.item(), E_total_golden, places=4)
 
         # Perform SCF iterations
         maxiters = 100
