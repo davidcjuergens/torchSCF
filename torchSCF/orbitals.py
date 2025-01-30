@@ -47,8 +47,8 @@ class PrimitiveGaussian(Orbital):
         """
         prefactor = (2 * self.alpha / math.pi) ** (3 / 4)
         return prefactor * torch.exp(-self.alpha * (torch.abs(r - self.center) ** 2))
-    
-    @ property 
+
+    @property
     def prefactor(self):
         return (2 * self.alpha / math.pi) ** (3 / 4)
 
@@ -82,6 +82,12 @@ class ContractedGaussian(Orbital):
 
         if (not torch.is_tensor(centers)) and (torch.is_tensor(centers[0])):
             self.centers = torch.stack(centers)
+        else:
+            self.centers = torch.tensor(centers)
 
     def __len__(self):
         return len(self.primitives)
+
+    @property
+    def prefactors(self):
+        return torch.tensor([p.prefactor for p in self.primitives])

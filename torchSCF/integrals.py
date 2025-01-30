@@ -283,3 +283,139 @@ def compute_core_hamiltonian_matrix(basis_set: List):
     """
     if all_contracted_gaussians(basis_set):
         return contracted_gaussian_core_hamiltonian_matrix(basis_set)
+
+
+def unnormalized_primitive_gaussian_2e_integral(
+    a: float, b: float, c: float, d: float, Ra: float, Rb: float, Rc: float, Rd: float
+):
+    """General integral (AB|CD) on four primitive gaussians.
+
+    Args:
+        a/b/c/d: exponents
+        Ra/Rb/Rc/Rd: centers of the gaussians
+
+    """
+    d_ab_squared = torch.sum((Ra - Rb) ** 2)
+    d_cd_squared = torch.sum((Rc - Rd) ** 2)
+
+    Rp = (a * Ra + b * Rb) / (a + b)
+    Rq = (c * Rc + d * Rd) / (c + d)
+    d_pq_squared = torch.sum((Rp - Rq) ** 2)
+
+    term1 = 2 * (np.pi ** (5 / 2)) / ((a + b) * (c + d) * torch.sqrt(a + b + c + d))
+    term2 = torch.exp(
+        (-a * b / (a + b)) * d_ab_squared - (c * d / (c + d)) * d_cd_squared
+    )
+    term3 = Boys((a + b) * (c + d) / (a + b + c + d) * d_pq_squared)
+
+    return term1 * term2 * term3
+
+
+def contracted_gaussian_2e_integral(cg1, cg2, cg3, cg4):
+    """
+    Computes two electron integral between four contracted gaussians.
+
+    Args:
+        cg1/2/3/4: contracted gaussians
+
+    Returns:
+
+    """
+    assert (
+        len(cg1) == len(cg2) == len(cg3) == len(cg4)
+    ), "Contracted gaussians must have the same number of primitives"
+
+    I = 0  # running total of the integral
+
+    N_prim = len(cg1)  # number of primitives that each contracted gaussian has
+
+    # mixing coefficients
+    d1 = cg1.coefficients
+    d2 = cg2.coefficients
+    d3 = cg3.coefficients
+    d4 = cg4.coefficients
+
+    # normalization constants
+    n1 = cg1.prefactors
+    n2 = cg2.prefactors
+    n3 = cg3.prefactors
+    n4 = cg4.prefactors
+
+    for i in range(N_prim):
+        for j in range(N_prim):
+            for k in range(N_prim):
+                for l in range(N_prim):
+
+                    alphas = [
+                        cg1.alphas[i],
+                        cg2.alphas[j],
+                        cg3.alphas[k],
+                        cg4.alphas[l],
+                    ]
+
+                    # have to be in Bohr units
+                    centers = [
+                        cg1.centers[i] * chemical.angstrom2bohr,
+                        cg2.centers[j] * chemical.angstrom2bohr,
+                        cg3.centers[k] * chemical.angstrom2bohr,
+                        cg4.centers[l] * chemical.angstrom2bohr,
+                    ]
+
+                    inputs = alphas + centers
+
+                    # unnormalized and unweighted by coefficients
+                    result = unnormalized_primitive_gaussian_2e_integral(*inputs)
+
+                    D = d1[i] * d2[j] * d3[k] * d4[l]
+                    norm = n1[i] * n2[j] * n3[k] * n4[l]
+
+                    I += D * norm * result
+
+    return I
+
+
+# dumb because it doesn't take advantage of symmetry of the integrals
+def dumb_get_2e_integrals(cg_orbitals: List[ContractedGaussian]) -> torch.Tensor:
+    """Evaluates all two electron integrals between contracted gaussians.
+
+    Args:
+        cg_orbitals: list of contracted gaussians
+
+    Returns:
+        outs: torch tensor of two-electron integrals.
+              Entry [i, j, k, l] is the integral (ij|kl)
+    """
+    N = len(cg_orbitals)
+    outs = torch.zeros((N, N, N, N))
+
+    for i in range(N):
+        for j in range(N):
+            for k in range(N):
+                for l in range(N):
+                    outs[i, j, k, l] = contracted_gaussian_2e_integral(
+                        cg_orbitals[i], cg_orbitals[j], cg_orbitals[k], cg_orbitals[l]
+                    )
+
+    return outs
+
+
+def contracted_gaussian_G_matrix(
+    cg_orbitals: List[ContractedGaussian], P: Union[torch.Tensor, None] = None
+):
+    """Compute the two-electron integral matrix (G) for a set of contracted gaussians.
+
+    Args:
+        cg_orbitals: list of contracted gaussians
+        P: density matrix
+
+    Returns:
+        G: torch tensor of the two-electron integral matrix
+    """
+    L = len(cg_orbitals)
+
+    G = torch.zeros((L, L))
+
+    # accessible via ints[i, j, k, l]
+    ee_integrals = dumb_get_2e_integrals(cg_orbitals)
+
+    print(ee_integrals)

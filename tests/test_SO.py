@@ -65,7 +65,7 @@ class Test_STO_3G_H2(unittest.TestCase):
         V1 = integrals.contracted_gaussian_V_matrix(mol.basis_set, mol.xyz[0])
         V1_golden = torch.tensor([[-1.2266, -0.5974],
                                   [-0.5974, -0.6538]])
-        print(V1)
+
         torch.testing.assert_close(V1, V1_golden, rtol=1e-4, atol=1e-4)
 
         # nuclear attraction matrix -- second nucleus
@@ -80,3 +80,5 @@ class Test_STO_3G_H2(unittest.TestCase):
                                      [-0.9584, -1.1204]])
         torch.testing.assert_close(Hcore, Hcore_golden, rtol=1e-4, atol=1e-4)
         
+        # Two electron integrals
+        G = integrals.contracted_gaussian_G_matrix(mol.basis_set)
