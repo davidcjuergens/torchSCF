@@ -45,8 +45,7 @@ class PrimitiveGaussian(Orbital):
         """
         Returns probability density at r.
         """
-        prefactor = (2 * self.alpha / math.pi) ** (3 / 4)
-        return prefactor * torch.exp(-self.alpha * (torch.abs(r - self.center) ** 2))
+        raise NotImplementedError
 
     @property
     def prefactor(self):
