@@ -1,90 +1,63 @@
 """Hartree-Fock SCF calculations"""
 
+import torch
 import argparse
 
-import parsers
-import molecule
-import integrals
+from torchSCF import molecule, parsers, integrals, linalg
+
+import pdb
 
 
-def compute_integrals(mol: molecule.Molecule):
-    """
-
-    Args:
-        mol: molecule object
-
-    Returns:
-        S: overlap matrix
-        Hcore: core Hamiltonian
-        two_e_integrals: two electron integrals
-
-    """
-    
-
-
-def run_scf(
+def density_matrix_scf(
     mol: molecule.Molecule,
-    basis_set_params: dict,
-    maxiter: int = 100,
-    etol: float = 1e-6,
+    P_init: torch.tensor,
+    ee_integrals: torch.tensor,
+    Hcore: torch.tensor,
+    S: torch.tensor,
+    maxiters: int = 100,
     ptol: float = 1e-6,
 ):
-    """Perform a Hartree-Fock SCF calculation.
+    """Perform SCF iterations until density matrix convergence.
 
     Following Szabo and Ostlund, page 146.
 
     Args:
-        mol: molecule object
-        basis_set_params: parameters for basis set
-        maxiter: maximum number of SCF iterations
-        etol: tolerance for energy convergence (in Hartree)
-        ptol: tolerance for density matrix convergence
-
+        mol: Molecule object
+        P_init: Initial guess for density matrix
+        ee_integrals: Electron-electron integrals
+        Hcore: Core Hamiltonian matrix
+        S: Overlap matrix
+        maxiters: Maximum number of iterations
+        ptol: Density matrix tolerance
     """
-    # (1) Set up basis set
-    mol.get_basis_set(basis_set_params)
 
-    # (2) compute molecular integrals
-    S = integrals.compute_overlap_matrix(mol.basis_set)
-    print(S)
-    return 
-    Hcore = compute_core_hamiltonian(mol)
-    two_e_integrals = compute_two_electron_integrals(mol)
+    P = P_init
 
-    # (3) diagonalize overlap matrix S and get transformation matrix X
-    Sdiag, X = get_canonical_orthogonalization(S)
+    for i in range(maxiters):
 
-    # (4) initial guess for density matrix
-    P = get_initial_density(mol)
+        G = integrals.contracted_gaussian_G_matrix(ee_integrals, P)
 
-    for i in range(maxiter):
-
-        # (5) Calculate G of eq. 3.154
-        G = compute_G(P, two_e_integrals)
-
-        # (6) Compute Fock matrix
         F = Hcore + G
 
-        # (7) Calculate transformed Fock matrix
+        Xcomplex = linalg.symmetric_orthogonalization(S)
+        X = Xcomplex.real
+
         Fprime = X.T @ F @ X
 
-        # (8) Diagonalize Fprime to get Cprime and eps
-        Cprime, eps = diagonalize(Fprime)
+        eps, Cprime = torch.linalg.eigh(Fprime)
 
-        # (9) Transform Cprime back to get C
-        C = X @ Cprime
+        C_out = X @ Cprime
+        P_out = linalg.c2p(C_out)
 
-        # (10) Compute new density matrix
-        P = compute_density(C)
+        diff = torch.norm(P_out - P)
+        print(f"SCF iteration {i}, diff = {diff}")
 
-        # (11) Compute electronic energy / determine if converged
-        converged = evaluate_convergence(P, Pold, ptol)
+        if diff < ptol:
+            return {"F": F, "P": P_out, "C": C_out}
+        else:
+            P = P_out
 
-        if converged:
-            break
-
-    return P, F, eps
-
+    
 
 def parse_args():
     parser = argparse.ArgumentParser(

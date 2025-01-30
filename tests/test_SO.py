@@ -2,9 +2,10 @@
 
 import os
 import unittest
+
 import torch
 
-from torchSCF import parsers, molecule, integrals, linalg
+from torchSCF import parsers, molecule, integrals, linalg, scf
 
 import pdb
 
@@ -20,15 +21,13 @@ class Test_STO_3G_H2(unittest.TestCase):
         golden_dir = os.path.join(thisdir, "goldens")
         self.h2_path = os.path.join(golden_dir, "h2.xyz")
 
-    def test_scf(self):
+    def test_minimal_basis_h2(self):
         """
         Tests the SCF procedure for H2.
         """
         h2_data = parsers.parse_xyz(self.h2_path, xyz_th=True)
         mol = molecule.Molecule(h2_data["xyz"], h2_data["elements"])
 
-        maxiters = 100
-        ptol = 1e-6
         basis_set = "sto-3g"
         sto_zeta = 1.24
         basis_set_kwargs = {"basis_set": basis_set, "sto_zeta": sto_zeta}
@@ -79,6 +78,7 @@ class Test_STO_3G_H2(unittest.TestCase):
 
         # initial guess at coefficient matrix C
         C_init = torch.ones((2, 2)) * 0.5
+        P_init = linalg.c2p(C_init)
 
         s12 = S_golden[0, 1]
         c11 = 1 / (torch.sqrt(2 * (1 + s12)))
@@ -146,3 +146,17 @@ class Test_STO_3G_H2(unittest.TestCase):
 
         # Get E total with nuclear repulsion
         E_total = E0 + mol.nuclear_repulsion
+        E_total_golden = -1.1167
+        # self.assertAlmostEqual(E_total.item(), E_total_golden, places=4)
+
+        # Perform SCF iterations
+        maxiters = 100
+        ptol = 1e-6
+        scf_out = scf.density_matrix_scf(
+            mol, P_init, ee, Hcore, S, maxiters=maxiters, ptol=ptol
+        )
+
+        Fscf = scf_out["F"]
+        self.assertTrue(torch.allclose(Fscf, F, rtol=1e-4, atol=1e-4))
+        E0scf = (Fscf[0, 0] + Hcore[0, 0] + Fscf[0, 1] + Hcore[0, 1]) / (1 + S[0, 1])
+        self.assertAlmostEqual(E0scf.item(), E0_golden, places=4)
