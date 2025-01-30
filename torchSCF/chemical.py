@@ -1,6 +1,6 @@
 """Basic chemical constants"""
 
-from ptable import ALL_SYMBOLS
+from torchSCF.ptable import ALL_SYMBOLS
 
 
 elements = ALL_SYMBOLS.split()

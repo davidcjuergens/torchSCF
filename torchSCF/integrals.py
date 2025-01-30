@@ -4,10 +4,8 @@ import torch
 import numpy as np
 from typing import List, Union
 
-from orbitals import PrimitiveGaussian, ContractedGaussian
-import chemical
-
-import pdb
+from torchSCF.orbitals import PrimitiveGaussian, ContractedGaussian
+from torchSCF import chemical
 
 
 def primitive_gaussian_overlap(

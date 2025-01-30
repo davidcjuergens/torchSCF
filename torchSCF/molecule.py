@@ -5,10 +5,7 @@ import numpy as np
 import re 
 from typing import Optional, List
 
-import chemical
-import orbitals
-
-import pdb
+from torchSCF import chemical, orbitals
 
 class Molecule:
     """Basic container for molecular information"""
