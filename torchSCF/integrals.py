@@ -400,22 +400,30 @@ def dumb_get_2e_integrals(cg_orbitals: List[ContractedGaussian]) -> torch.Tensor
 
 
 def contracted_gaussian_G_matrix(
-    cg_orbitals: List[ContractedGaussian], P: Union[torch.Tensor, None] = None
+    ee: torch.Tensor,
+    P: torch.Tensor,
 ):
     """Compute the two-electron integral matrix (G) for a set of contracted gaussians.
 
     Args:
-        cg_orbitals: list of contracted gaussians
-        P: density matrix
+        cgee: two-electron integrals, computed from contracted gaussians
+        P: Density matrix, constructed from MO coefficient matrix (C)
 
     Returns:
         G: torch tensor of the two-electron integral matrix
     """
-    L = len(cg_orbitals)
+    L = P.shape[0]
 
     G = torch.zeros((L, L))
 
-    # accessible via ints[i, j, k, l]
-    ee_integrals = dumb_get_2e_integrals(cg_orbitals)
+    # loop over Gij indicies
+    for i in range(L):  # i is mu
+        for j in range(L):  # j is nu
 
-    print(ee_integrals)
+            # loop over Pkl indices
+            for k in range(L):  # k is lambda
+                for l in range(L):  # l is sigma
+
+                    G[i, j] += P[k, l] * (ee[i, j, l, k] - 0.5 * ee[i, k, l, j])
+
+    return G

@@ -64,5 +64,31 @@ class Molecule:
             raise NotImplementedError()
 
         self.basis_set = o
+    
+    @property
+    def nuclear_repulsion(self):
+        """Computes the nuclear repulsion energy"""
+        return self.compute_nuclear_repulsion_energy()
+    
+    def compute_nuclear_repulsion_energy(self):
+        """
+        Computes simple coulombic repulsion between nuclei
+        """
+
+        # atomic numbers
+        charges = torch.tensor([chemical.get_atomic_number(e) for e in self.elements])
+
+        # compute distances between nuclei - don't double count
+        dmap = torch.cdist(self.xyz, self.xyz)
+        dmap = torch.triu(dmap, diagonal=1)
+        triu = torch.triu_indices(dmap.shape[0], dmap.shape[1], offset=1)
+        i,j = triu[0], triu[1]
+        r = dmap[i,j]
+
+        # compute repulsion (atomic units)
+        repulsion = torch.sum(charges[i] * charges[j] / r) 
+
+        return repulsion
+
 
             
