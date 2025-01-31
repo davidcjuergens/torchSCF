@@ -442,7 +442,7 @@ def ao_to_mo(
 
     # SO eq. 3.241
     mo_Hcore = torch.einsum("pq,pi,qj->ij", Hcore, C, C)
-    
+
     # SO eq. 3.242
     mo_ee = torch.einsum("pqrs,pi,qj,rk,sl->ijkl", ee, C, C, C, C)
 

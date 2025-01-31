@@ -21,6 +21,32 @@ class Test_STO_3G_H2(unittest.TestCase):
         golden_dir = os.path.join(thisdir, "goldens")
         self.h2_path = os.path.join(golden_dir, "h2.xyz")
 
+        self.basis_set = "sto-3g"
+        self.sto_zeta = 1.24
+
+    def test_parse_and_mol_and_basis_set(self):
+        """
+        Test the construction and basis-set getting of Molecule.
+        """
+        h2_data = parsers.parse_xyz(self.h2_path, xyz_th=True)
+        mol = molecule.Molecule(h2_data["xyz"], h2_data["elements"])
+        self.assertEqual(mol.n_electrons, 2)
+
+        basis_set_kwargs = {"basis_set": self.basis_set, "sto_zeta": self.sto_zeta}
+
+        # get basis set
+        mol.get_basis_set(basis_set_kwargs)
+
+        alphas_golden = [0.168856, 0.623913, 3.42525]
+        weights_golden = [0.444635, 0.535328, 0.154329]
+        for i in range(3):
+            self.assertAlmostEqual(
+                mol.basis_set_params["alphas"][i], alphas_golden[i], places=6
+            )
+            self.assertAlmostEqual(
+                mol.basis_set_params["weights"][i], weights_golden[i], places=6
+            )
+
     def test_minimal_basis_h2(self):
         """
         Tests the SCF procedure for H2.
@@ -30,6 +56,7 @@ class Test_STO_3G_H2(unittest.TestCase):
 
         basis_set = "sto-3g"
         sto_zeta = 1.24
+
         basis_set_kwargs = {"basis_set": basis_set, "sto_zeta": sto_zeta}
 
         # get basis set
@@ -175,16 +202,19 @@ class Test_STO_3G_H2(unittest.TestCase):
 
         # test two-electron integrals after transformation
         J11 = ee_mo[0, 0, 0, 0]
-        J11_golden = 0.6746
         J12 = ee_mo[0, 0, 1, 1]
-        J12_golden = 0.6636
         J22 = ee_mo[1, 1, 1, 1]
-        J22_golden = 0.6975
         K12 = ee_mo[0, 1, 1, 0]
+        J11_golden = 0.6746
+        J12_golden = 0.6636
+        J22_golden = 0.6975
         K12_golden = 0.1813
 
         self.assertAlmostEqual(J11.item(), J11_golden, places=4)
         self.assertAlmostEqual(J12.item(), J12_golden, places=4)
         self.assertAlmostEqual(J22.item(), J22_golden, places=4)
         self.assertAlmostEqual(K12.item(), K12_golden, places=4)
-        pdb.set_trace()
+
+        # Compute energies in MO basis
+        E0_from_mo = 2 * h11 + J11
+        self.assertAlmostEqual(E0_from_mo.item(), E0_golden, places=4)
