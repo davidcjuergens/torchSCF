@@ -156,7 +156,35 @@ class Test_STO_3G_H2(unittest.TestCase):
             mol, P_init, ee, Hcore, S, maxiters=maxiters, ptol=ptol
         )
 
+        # Compare SCF output with golden values
         Fscf = scf_out["F"]
         self.assertTrue(torch.allclose(Fscf, F, rtol=1e-4, atol=1e-4))
         E0scf = (Fscf[0, 0] + Hcore[0, 0] + Fscf[0, 1] + Hcore[0, 1]) / (1 + S[0, 1])
         self.assertAlmostEqual(E0scf.item(), E0_golden, places=4)
+
+        # Convert from atomic basis to molecular orbital basis
+        Hcore_mo, ee_mo = integrals.ao_to_mo(C_out, Hcore, ee)
+
+        # test one-electron integrals after transformation
+        h11 = Hcore_mo[0, 0]
+        h22 = Hcore_mo[1, 1]
+        h11_golden = -1.2528
+        h22_golden = -0.4756
+        self.assertAlmostEqual(h11.item(), h11_golden, places=4)
+        self.assertAlmostEqual(h22.item(), h22_golden, places=4)
+
+        # test two-electron integrals after transformation
+        J11 = ee_mo[0, 0, 0, 0]
+        J11_golden = 0.6746
+        J12 = ee_mo[0, 0, 1, 1]
+        J12_golden = 0.6636
+        J22 = ee_mo[1, 1, 1, 1]
+        J22_golden = 0.6975
+        K12 = ee_mo[0, 1, 1, 0]
+        K12_golden = 0.1813
+
+        self.assertAlmostEqual(J11.item(), J11_golden, places=4)
+        self.assertAlmostEqual(J12.item(), J12_golden, places=4)
+        self.assertAlmostEqual(J22.item(), J22_golden, places=4)
+        self.assertAlmostEqual(K12.item(), K12_golden, places=4)
+        pdb.set_trace()

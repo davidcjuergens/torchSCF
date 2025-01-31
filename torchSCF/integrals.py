@@ -425,3 +425,25 @@ def contracted_gaussian_G_matrix(
                     G[i, j] += P[k, l] * (ee[i, j, l, k] - 0.5 * ee[i, k, l, j])
 
     return G
+
+
+def ao_to_mo(
+    C: torch.tensor,
+    Hcore: torch.tensor,
+    ee: torch.tensor,
+):
+    """Convert one and two electron integrals from AO basis to MO basis.
+
+    Args:
+        C: MO coefficient matrix
+        Hcore: core Hamiltonian matrix
+        ee: two electron integrals
+    """
+
+    # SO eq. 3.241
+    mo_Hcore = torch.einsum("pq,pi,qj->ij", Hcore, C, C)
+    
+    # SO eq. 3.242
+    mo_ee = torch.einsum("pqrs,pi,qj,rk,sl->ijkl", ee, C, C, C, C)
+
+    return mo_Hcore, mo_ee
