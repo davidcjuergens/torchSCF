@@ -1,9 +1,9 @@
 # Classes for creating/manipulating orbital functions
+import numpy as np
 import torch
 import math
 from typing import Union, List
-
-ORIGIN = torch.tensor(0.0)
+import pdb 
 
 
 class Orbital:
@@ -36,7 +36,13 @@ class PrimitiveGaussian(Orbital):
         """
 
         self.alpha = alpha
-        self.center = torch.tensor(center)
+
+        if isinstance(center, tuple):
+            self.center = torch.tensor(center)
+        elif isinstance(center, np.ndarray):
+            self.center = torch.from_numpy(center)
+        else:
+            self.center = center
 
     def evaluate_density(self, r: torch.tensor):
         """
@@ -76,8 +82,8 @@ class ContractedGaussian(Orbital):
         self.coefficients = torch.tensor(coefficients)
         self.alphas = torch.tensor(alphas)
 
-        if (not torch.is_tensor(centers)) and (torch.is_tensor(centers[0])):
-            self.centers = torch.stack(centers)
+        if torch.is_tensor(centers):
+            self.centers = centers
         else:
             self.centers = torch.tensor(centers)
 

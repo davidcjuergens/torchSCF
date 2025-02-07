@@ -22,7 +22,8 @@ def compute_h2_energy(Hcore_mo: torch.tensor, ee_mo: torch.tensor, mol: molecule
     K12 = ee_mo[0, 1, 1, 0]
 
     E0 = 2 * h11 + J11
+    Nrep = mol.nuclear_repulsion
 
-    Etot = E0 + mol.nuclear_repulsion
+    Etot = E0 + Nrep
 
-    return E0, Etot
+    return E0, Etot, Nrep
