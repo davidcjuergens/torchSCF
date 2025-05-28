@@ -1,0 +1,15 @@
+# HeH+ example
+# Each entry is a line in a .xyz file 
+xyz:
+  - "2"
+  - "# HeH+"
+  - "He 0.0 0.0 0.0"
+  - "H  0.0 0.0 0.774296176"  
+
+basis_set: 
+  type: sto-3g
+  sto_zetas:
+    - 2.0925
+    - 1.24
+
+n_electrons: 2 # net charge = +1
