@@ -45,9 +45,9 @@ def primitive_gaussian_overlap(
 
 def contracted_gaussian_overlap(cg1, cg2):
     """Compute single overlap s between two contracted gaussians."""
-    assert len(cg1) == len(
-        cg2
-    ), "Contracted gaussians must have the same number of primitives"
+    assert len(cg1) == len(cg2), (
+        "Contracted gaussians must have the same number of primitives"
+    )
     s = 0
 
     NG = len(cg1)
@@ -79,14 +79,15 @@ def contracted_gaussian_overlap_matrix(
     # super dumb implementation, just to get things going
     for i in range(L):
         for j in range(i, L):
-
             S[i, j] = contracted_gaussian_overlap(cg_orbitals[i], cg_orbitals[j])
             S[j, i] = S[i, j]
 
     return S
 
 
-all_contracted_gaussians = lambda x: all([isinstance(o, ContractedGaussian) for o in x])
+def all_contracted_gaussians(x):
+    """Check if all elements in the list are ContractedGaussian objects."""
+    return all([isinstance(o, ContractedGaussian) for o in x])
 
 
 def compute_overlap_matrix(basis_set: List):
@@ -163,7 +164,6 @@ def contracted_gaussian_T_matrix(cg_orbitals: List[ContractedGaussian]):
 
     for i in range(L):
         for j in range(i, L):
-
             T[i, j] = contracted_gaussian_kinetic(cg_orbitals[i], cg_orbitals[j])
             T[j, i] = T[i, j]
 
@@ -242,13 +242,14 @@ def contracted_gaussian_nuclear_attraction(
 
 
 def contracted_gaussian_V_matrix(
-    cg_orbitals: List[ContractedGaussian], nucleus: torch.Tensor
+    cg_orbitals: List[ContractedGaussian], xyz_nucleus: torch.Tensor, z: int = 1
 ):
     """Compute the nuclear attraction matrix for a set of contracted gaussians.
 
     Args:
         cg_orbitals: list of contracted gaussians
-        nucleus: torch tensor of nucleus position
+        xyz_nucleus: torch tensor of nucleus position
+        z: atomic number of nucleus
     """
     L = len(cg_orbitals)
 
@@ -256,9 +257,11 @@ def contracted_gaussian_V_matrix(
 
     for i in range(L):
         for j in range(i, L):
-
-            V[i, j] = contracted_gaussian_nuclear_attraction(
-                cg_orbitals[i], cg_orbitals[j], nucleus
+            V[i, j] = (
+                contracted_gaussian_nuclear_attraction(
+                    cg_orbitals[i], cg_orbitals[j], xyz_nucleus
+                )
+                * z
             )
             V[j, i] = V[i, j]
 
@@ -319,9 +322,9 @@ def contracted_gaussian_2e_integral(cg1, cg2, cg3, cg4):
     Returns:
 
     """
-    assert (
-        len(cg1) == len(cg2) == len(cg3) == len(cg4)
-    ), "Contracted gaussians must have the same number of primitives"
+    assert len(cg1) == len(cg2) == len(cg3) == len(cg4), (
+        "Contracted gaussians must have the same number of primitives"
+    )
 
     I = 0  # running total of the integral
 
@@ -343,7 +346,6 @@ def contracted_gaussian_2e_integral(cg1, cg2, cg3, cg4):
         for j in range(N_prim):
             for k in range(N_prim):
                 for l in range(N_prim):
-
                     alphas = [
                         cg1.alphas[i],
                         cg2.alphas[j],
@@ -417,11 +419,9 @@ def contracted_gaussian_G_matrix(
     # loop over Gij indicies
     for i in range(L):  # i is mu
         for j in range(L):  # j is nu
-
             # loop over Pkl indices
             for k in range(L):  # k is lambda
                 for l in range(L):  # l is sigma
-
                     G[i, j] += P[k, l] * (ee[i, j, l, k] - 0.5 * ee[i, k, l, j])
 
     return G

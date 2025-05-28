@@ -8,7 +8,11 @@ lower_elements = [e.lower() for e in elements]
 
 # get atomic number for string representation of element
 atomic_numbers = {e: i + 1 for i, e in enumerate(elements)}
-get_atomic_number = lambda e: atomic_numbers[e.strip()]
+
+
+def get_atomic_number(e):
+    return atomic_numbers[e.strip()]
+
 
 # Conversion of atomic units to SI units (Szabo and Ostlund, pg. 42)
 a_0 = 5.2918e-11  # length: Bohr radius (meters)

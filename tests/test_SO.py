@@ -32,20 +32,24 @@ class Test_STO_3G_H2(unittest.TestCase):
         mol = molecule.Molecule(h2_data["xyz"], h2_data["elements"])
         self.assertEqual(mol.n_electrons, 2)
 
-        basis_set_kwargs = {"basis_set": self.basis_set, "sto_zeta": self.sto_zeta}
+        basis_set_kwargs = {
+            "basis_set": self.basis_set,
+            "sto_zetas": [self.sto_zeta, self.sto_zeta],
+        }
 
         # get basis set
-        mol.get_basis_set(basis_set_kwargs)
+        mol.get_basis_set(**basis_set_kwargs)
 
         alphas_golden = [0.168856, 0.623913, 3.42525]
         weights_golden = [0.444635, 0.535328, 0.154329]
         for i in range(3):
-            self.assertAlmostEqual(
-                mol.basis_set_params["alphas"][i], alphas_golden[i], places=6
-            )
-            self.assertAlmostEqual(
-                mol.basis_set_params["weights"][i], weights_golden[i], places=6
-            )
+            for orbital in mol.basis_set:
+                self.assertAlmostEqual(
+                    orbital.alphas[i].item(), alphas_golden[i], places=6
+                )
+                self.assertAlmostEqual(
+                    orbital.coefficients[i].item(), weights_golden[i], places=6
+                )
 
     def test_minimal_basis_h2(self):
         """
@@ -54,23 +58,10 @@ class Test_STO_3G_H2(unittest.TestCase):
         h2_data = parsers.parse_xyz(self.h2_path, xyz_th=True)
         mol = molecule.Molecule(h2_data["xyz"], h2_data["elements"])
 
-        basis_set = "sto-3g"
-        sto_zeta = 1.24
-
-        basis_set_kwargs = {"basis_set": basis_set, "sto_zeta": sto_zeta}
+        basis_set_kwargs = {"basis_set": "sto-3g", "sto_zetas": [1.24, 1.24]}
 
         # get basis set
-        mol.get_basis_set(basis_set_kwargs)
-
-        alphas_golden = [0.168856, 0.623913, 3.42525]
-        weights_golden = [0.444635, 0.535328, 0.154329]
-        for i in range(3):
-            self.assertAlmostEqual(
-                mol.basis_set_params["alphas"][i], alphas_golden[i], places=6
-            )
-            self.assertAlmostEqual(
-                mol.basis_set_params["weights"][i], weights_golden[i], places=6
-            )
+        mol.get_basis_set(**basis_set_kwargs)
 
         # overlap matrix
         S = integrals.compute_overlap_matrix(mol.basis_set)
