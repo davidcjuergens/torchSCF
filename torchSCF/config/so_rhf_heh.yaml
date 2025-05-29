@@ -12,4 +12,4 @@ basis_set:
     - 2.0925
     - 1.24
 
-n_electrons: 2 # net charge = +1
+net_charge: 1 # since it's HeH+

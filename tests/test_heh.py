@@ -29,7 +29,7 @@ def test_heh():
     conf = get_heh_conf()
     parsed = parsers.parse_xyz(lines=conf.xyz, xyz_th=True)
     mol = molecule.Molecule(
-        parsed["xyz"], parsed["elements"], n_electrons=conf.n_electrons
+        parsed["xyz"], parsed["elements"], net_charge=conf.net_charge
     )
 
     # the order of zetas must match the order of electron centers

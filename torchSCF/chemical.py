@@ -30,6 +30,7 @@ hartree = eps_a
 
 a_0_angstrom = a_0 * 1e10  # length: Bohr radius (Angstrom)
 angstrom2bohr = 1 / a_0_angstrom
+bohr2angstrom = a_0_angstrom
 
 ###################################
 # Szabo Ostlund STO-NG basis sets #

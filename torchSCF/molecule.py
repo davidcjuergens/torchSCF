@@ -11,22 +11,22 @@ class Molecule:
     """Basic container for molecular information"""
 
     def __init__(
-        self, xyz: List[tuple], elements: List[str], n_electrons: Optional[int] = None
+        self,
+        xyz: List[tuple],
+        elements: List[str],
+        net_charge: Optional[int] = 0,
     ):
         """Create a Molecule object
 
         Args:
             xyz: list of atomic coordinates (in Angstroms!!!)
             elements: list of atomic symbols
-            n_electrons: number of electrons in the molecule
+            net_charge: net charge of the molecule (default 0)
         """
         self.xyz = xyz
         self.elements = elements
 
-        if n_electrons is None:
-            self.n_electrons = self.neutral_molecule_electrons()
-        else:
-            self.n_electrons = n_electrons
+        self.n_electrons = self.neutral_molecule_electrons() - net_charge
 
     def neutral_molecule_electrons(self):
         """Count the number of electrons which would make the molecule neutral"""
@@ -36,7 +36,7 @@ class Molecule:
     def atomic_numbers(self):
         """Get the atomic charges of the molecule"""
         return [chemical.get_atomic_number(e) for e in self.elements]
-    
+
     def get_basis_set(self, basis_set, sto_zetas):
         """Get the basis set for the molecule
 
