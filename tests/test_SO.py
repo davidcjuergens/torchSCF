@@ -5,8 +5,8 @@ import unittest
 
 import torch
 
-from torchSCF import parsers, molecule, integrals, linalg, scf
-
+from torchSCF import parsers, molecule, integrals, linalg
+from torchSCF.h2 import density_matrix_scf
 
 
 class Test_STO_3G_H2(unittest.TestCase):
@@ -169,7 +169,7 @@ class Test_STO_3G_H2(unittest.TestCase):
         # Perform SCF iterations
         maxiters = 100
         ptol = 1e-6
-        scf_out = scf.density_matrix_scf(
+        scf_out = density_matrix_scf(
             mol, P_init, ee, Hcore, S, maxiters=maxiters, ptol=ptol
         )
 

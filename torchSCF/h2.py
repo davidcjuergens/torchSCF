@@ -12,7 +12,6 @@ from torchSCF import linalg
 from torchSCF import observables
 
 
-
 def density_matrix_scf(
     mol: molecule.Molecule,
     P_init: torch.tensor,
@@ -65,7 +64,7 @@ def density_matrix_scf(
             return {"F": F, "P": P_out, "C": C_out}
         else:
             P = P_out
-    
+
     print(f"SCF did not converge after {maxiters} iterations")
     return {"F": F, "P": P_out, "C": C_out}
 

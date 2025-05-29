@@ -39,5 +39,5 @@ torchvision = [
 [tool.ruff.lint]
 ignore = [
   "F841", # ignore unused variable warnings
-  "E741" # irgnore ambiguous variable name warnings
+  "E741" # ignore ambiguous variable name warnings
 ] 
