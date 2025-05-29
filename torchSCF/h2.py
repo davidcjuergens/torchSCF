@@ -20,6 +20,7 @@ def density_matrix_scf(
     S: torch.tensor,
     maxiters: int = 100,
     ptol: float = 1e-6,
+    verbose = False,
 ):
     """Perform SCF iterations until density matrix convergence.
 
@@ -51,10 +52,15 @@ def density_matrix_scf(
         eps, Cprime = torch.linalg.eigh(Fprime)
 
         C_out = X @ Cprime
-        P_out = linalg.c2p(C_out)
+        P_out = linalg.c2p(C_out, nocc=mol.n_electrons // 2)
 
         diff = torch.norm(P_out - P)
 
+        if verbose:
+            print(f"Iteration {i + 1}: P_out: {P_out}")
+            print(f"Iteration {i + 1}: C_out: {C_out}")
+            print(f"C @ C.T: {C_out @ C_out.T}")
+            print('***' * 10)
         if diff < ptol:
             print_to_column(
                 "SCF converged:",

@@ -82,7 +82,7 @@ def test_heh():
     for i in range(6):
         eps, Cprime = torch.linalg.eigh(Fprime)
         C = X @ Cprime
-        P = linalg.c2p(C)
+        P = linalg.c2p(C, nocc=1)  # 1 occupied orbital = 2 electrons
         G = integrals.contracted_gaussian_G_matrix(ee, P)
         F = Hcore + G
         Fprime = X.T @ F @ X

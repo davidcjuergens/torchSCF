@@ -95,7 +95,7 @@ class Test_STO_3G_H2(unittest.TestCase):
 
         # initial guess at coefficient matrix C
         C_init = torch.ones((2, 2)) * 0.5
-        P_init = linalg.c2p(C_init)
+        P_init = linalg.c2p(C_init, nocc=1)
 
         s12 = S_golden[0, 1]
         c11 = 1 / (torch.sqrt(2 * (1 + s12)))
@@ -103,7 +103,7 @@ class Test_STO_3G_H2(unittest.TestCase):
 
         C_golden = torch.tensor([[c11, c12], [c11, -c12]])
         P_golden = torch.ones((2, 2)) * (1 / (1 + s12))
-        P_from_Cgolden = linalg.c2p(C_golden)
+        P_from_Cgolden = linalg.c2p(C_golden, nocc=1)
         self.assertTrue(torch.allclose(P_golden, P_from_Cgolden))
 
         # two electron integrals
@@ -170,7 +170,7 @@ class Test_STO_3G_H2(unittest.TestCase):
         maxiters = 100
         ptol = 1e-6
         scf_out = density_matrix_scf(
-            mol, P_init, ee, Hcore, S, maxiters=maxiters, ptol=ptol
+            mol, P_init, ee, Hcore, S, maxiters=maxiters, ptol=ptol, verbose=False
         )
 
         # Compare SCF output with golden values

@@ -24,27 +24,19 @@ def symmetric_orthogonalization(A: torch.Tensor) -> torch.Tensor:
     return X
 
 
-def c2p(C: torch.Tensor) -> torch.Tensor:
+def c2p(C: torch.Tensor, nocc: int) -> torch.Tensor:
     """Computes the density matrix from the coefficient matrix.
 
     SO equation 3.145.
 
-    NOTE: Not simply 2 * C @ C.T
-
     Args:
-        C : coefficient matrix
+        C : MO coefficient matrix
+        nocc: number of occupied orbitals
 
     Returns:
         P : density matrix
     """
-
-    P = torch.zeros_like(C)
-
-    sum_to = C.shape[0] // 2  # sum to half the number of basis functions??
-
-    for i in range(P.shape[0]):
-        for j in range(P.shape[1]):
-            for a in range(sum_to):
-                P[i, j] += 2 * C[i, a] * C[j, a]
-
+    assert C.ndim == 2, "C must be a 2D tensor"
+    C_occ = C[:, :nocc]
+    P = 2 * C_occ @ C_occ.T
     return P
