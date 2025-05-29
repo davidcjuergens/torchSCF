@@ -1,17 +1,19 @@
 """Compute observables"""
 
-import torch 
+import torch
 
 from torchSCF import molecule
 
-def compute_h2_energy(Hcore_mo: torch.tensor, ee_mo: torch.tensor, mol: molecule.Molecule):
+
+def compute_h2_energy(
+    Hcore_mo: torch.tensor, ee_mo: torch.tensor, mol: molecule.Molecule
+):
     """Compute the total energy of the molecule
 
     Args:
         Hcore_mo: core Hamiltonian matrix in molecular orbital basis
         ee_mo: two-electron integrals in molecular orbital basis
     """
-    
 
     h11 = Hcore_mo[0, 0]
     h22 = Hcore_mo[1, 1]

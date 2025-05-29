@@ -1,19 +1,14 @@
 """Test for HeH+ system from Szabo Ostlund"""
 
-import pytest
 import os
-from omegaconf import DictConfig, OmegaConf
+from omegaconf import OmegaConf
 
 import torch
-import math
-import pdb
 
 from torchSCF import parsers
 from torchSCF import molecule
 from torchSCF import integrals
 from torchSCF import linalg
-from torchSCF import scf
-from torchSCF import orbitals
 
 
 def get_heh_conf():

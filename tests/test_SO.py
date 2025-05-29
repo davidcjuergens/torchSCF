@@ -7,7 +7,6 @@ import torch
 
 from torchSCF import parsers, molecule, integrals, linalg, scf
 
-import pdb
 
 
 class Test_STO_3G_H2(unittest.TestCase):

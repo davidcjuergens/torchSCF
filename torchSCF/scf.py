@@ -1,6 +1,7 @@
 """Hartree-Fock SCF calculations"""
 
 import torch
+import numpy as np
 import argparse
 import time
 
@@ -10,7 +11,6 @@ from torchSCF import integrals
 from torchSCF import linalg
 from torchSCF import observables
 
-import pdb
 
 
 def density_matrix_scf(
@@ -65,6 +65,9 @@ def density_matrix_scf(
             return {"F": F, "P": P_out, "C": C_out}
         else:
             P = P_out
+    
+    print(f"SCF did not converge after {maxiters} iterations")
+    return {"F": F, "P": P_out, "C": C_out}
 
 
 def parse_args():
@@ -140,7 +143,52 @@ def scf_h2_energy(xyz, elements, basis_set, sto_zeta, log_time=False):
     # Compute total energy
     E0, Etot, Nrep = observables.compute_h2_energy(Hcore_mo, ee_mo, mol)
 
-    return E0, Etot
+    return E0, Etot, Nrep
+
+
+def H2_Etot_at_bond_length(bl: float = 0.740852, maxiters=1000, P_init=None):
+    """Compute Etot for H2 at a given bond length
+
+    Args:
+        bl: bond length, in Angstroms
+    """
+    h2_path = "/home/davidcj/projects/torchSCF/tests/goldens/h2.xyz"
+    parsed = parsers.parse_xyz(h2_path, xyz_th=True)
+    xyz = parsed["xyz"]
+    elements = parsed["elements"]
+
+    original_bl = torch.norm(xyz[0] - xyz[1], p=2)
+    diff = bl - original_bl
+    xyz[1, -1] += diff  # change z coordinate of second H atom
+
+    basis_set = "sto-3g"
+    sto_zeta = 1.24
+
+    E0, Etot, Nrep = scf_h2_energy(xyz, elements, basis_set, sto_zeta)
+
+    return E0, Etot, Nrep
+
+
+def h2_energy_landscape(fp, dmin=0.15, dmax=5, maxiters=100):
+    """
+    Compute h2 energy over various distances and safe to fp.
+    """
+    bls = np.linspace(dmin, dmax, num=100)
+
+    E0s, Etots, Nreps = [], [], []
+    P = None
+    for bl in bls:
+        E0, Etot, Nrep = H2_Etot_at_bond_length(bl, P_init=P)
+
+        E0s.append(E0)
+        Etots.append(Etot)
+        Nreps.append(Nrep)
+
+    with open(fp, "w") as f:
+        f.write("bond_length,E0,Etot,Nrep\n")
+        for i in range(len(bls)):
+            to_write = f"{bls[i]},{E0s[i]},{Etots[i]},{Nreps[i]}\n"
+            f.write(to_write)
 
 
 def main():
@@ -160,4 +208,6 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    # main()
+
+    h2_energy_landscape("020725_h2_energy_landscape.csv")

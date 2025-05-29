@@ -1,12 +1,10 @@
 """Molecule class for storing molecular information"""
 
 import torch
-import numpy as np
 import re
 from typing import Optional, List
 
 from torchSCF import chemical, orbitals
-import pdb
 
 
 class Molecule:
